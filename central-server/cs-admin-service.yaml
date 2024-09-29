@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xroad-centralserver-admin-service-deployment
+  labels:
+    app: xroad-centralserver-admin-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xroad-centralserver-admin-service
+  template:
+    metadata:
+      labels:
+        app: xroad-centralserver-admin-service
+    spec:
+      containers:
+        - name: xroad-centralserver-admin-service
+          image: ghcr.io/digitaltelangana/pravahini:latest
+          command: ["/usr/share/xroad/bin/xroad-centralserver-admin-service"]
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          securityContext:
+            runAsUser: 1100  
+            runAsGroup: 1100
+          volumeMounts:
+            - name: xroad-config-volume
+              mountPath: /etc/xroad.properties
+              subPath: xroad.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/db.properties
+              subPath: db.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/ssl.properties
+              subPath: ssl.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/ssl/center-admin-service.p12
+              subPath: center-admin-service.p12
+      volumes:
+        - name: xroad-config-volume
+          configMap:
+            name: xroad-config    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xroad-centralserver-admin-service
+spec:
+  selector:
+    app: xroad-centralserver-admin-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081

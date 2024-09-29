@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: xroad-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: pravahini.telangana.network
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pravahini-xroad-service
+                port:
+                  number: 80
+          - path: /proxy
+            pathType: Prefix
+            backend:
+              service:
+                name: pravahini-xroad-service
+                port:
+                  number: 5500
+          - path: /signer
+            pathType: Prefix
+            backend:
+              service:
+                name: pravahini-xroad-service
+                port:
+                  number: 5577

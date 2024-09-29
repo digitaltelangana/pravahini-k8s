@@ -1,0 +1,87 @@
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xroad-signer-deployment
+  labels:
+    app: xroad-signer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xroad-signer
+  template:
+    metadata:
+      labels:
+        app: xroad-signer
+    spec:
+      containers:
+        - name: xroad-signer
+          image: ghcr.io/digitaltelangana/pravahini:latest
+          command: ["/usr/share/xroad/bin/xroad-signer"]
+          ports:
+            - containerPort: 5558
+            - containerPort: 5559
+          env:
+              - name: XROAD_COMMON_GRPC_INTERNAL_KEYSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: xroad-common-grpc-passwords
+                    key: grpc_internal_keystore_password
+              - name: XROAD_COMMON_GRPC_INTERNAL_TRUSTSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: xroad-common-grpc-passwords
+                    key: grpc_internal_keystore_password
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          securityContext:
+            runAsUser: 1100  
+            runAsGroup: 1100
+          volumeMounts:
+            - name: grpc-keystore
+              mountPath: /var/run/xroad/xroad-grpc-internal-keystore.p12
+              subPath: xroad-grpc-internal-keystore.p12
+            - name: xroad-config-volume
+              mountPath: /etc/xroad.properties
+              subPath: xroad.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/conf.d/local.ini
+              subPath: local.ini
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/devices.ini
+              subPath: devices.ini
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/db.properties
+              subPath: db.properties
+            - name: xroad-cache-volume
+              mountPath: /var/cache/xroad
+      volumes:
+        - name: xroad-cache-volume
+          persistentVolumeClaim:
+            claimName: xroad-cache-pvc
+        - name: xroad-config-volume
+          configMap:
+            name: xroad-config    
+        - name: grpc-keystore
+          secret:
+            secretName: xroad-common-grpc-passwords
+            items:
+              - key: xroad-grpc-internal-keystore_p12
+                path: xroad-grpc-internal-keystore.p12
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xroad-signer-service
+spec:
+  selector:
+    app: xroad-signer
+  ports:
+    - protocol: TCP
+      port: 5558
+      targetPort: 5558
+---

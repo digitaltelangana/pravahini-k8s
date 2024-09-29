@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xroad-confclient-deployment
+  labels:
+    app: xroad-confclient
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xroad-confclient
+  template:
+    metadata:
+      labels:
+        app: xroad-confclient
+    spec:
+      containers:
+        - name: xroad-confclient
+          image: ghcr.io/digitaltelangana/pravahini:latest
+          command: ["/usr/share/xroad/bin/xroad-confclient"]
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          securityContext:
+            runAsUser: 1100  
+            runAsGroup: 1100
+          volumeMounts:
+            - name: xroad-config-volume
+              mountPath: /etc/xroad.properties
+              subPath: xroad.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/db.properties
+              subPath: db.properties
+      volumes:
+        - name: xroad-config-volume
+          configMap:
+            name: xroad-config    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xroad-confclient-service
+spec:
+  selector:
+    app: xroad-confclient
+  ports:
+    - protocol: TCP
+      port: 8086
+      targetPort: 8086

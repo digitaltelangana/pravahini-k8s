@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xroad-proxy-deployment
+  labels:
+    app: xroad-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xroad-proxy
+  template:
+    metadata:
+      labels:
+        app: xroad-proxy
+    spec:
+      containers:
+        - name: xroad-proxy
+          image: ghcr.io/digitaltelangana/pravahini:latest
+          command: ["/usr/share/xroad/bin/xroad-proxy"]
+          ports:
+            - containerPort: 5500
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          env:
+              - name: XROAD_COMMON_GRPC_INTERNAL_KEYSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: xroad-common-grpc-passwords
+                    key: grpc_internal_keystore_password
+              - name: XROAD_COMMON_GRPC_INTERNAL_TRUSTSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: xroad-common-grpc-passwords
+                    key: grpc_internal_keystore_password
+          securityContext:
+            runAsUser: 1100  
+            runAsGroup: 1100
+          volumeMounts:
+            - name: grpc-keystore
+              mountPath: /var/run/xroad/xroad-grpc-internal-keystore.p12
+              subPath: xroad-grpc-internal-keystore.p12
+            - name: xroad-config-volume
+              mountPath: /etc/xroad.properties
+              subPath: xroad.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/db.properties
+              subPath: db.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/conf.d/local.ini
+              subPath: local.ini
+      volumes:
+        - name: xroad-config-volume
+          configMap:
+            name: xroad-config  
+        - name: grpc-keystore
+          secret:
+            secretName: xroad-common-grpc-passwords
+            items:
+              - key: xroad-grpc-internal-keystore_p12
+                path: xroad-grpc-internal-keystore.p12  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xroad-proxy-service
+spec:
+  selector:
+    app: xroad-proxy
+  ports:
+    - protocol: TCP
+      port: 5500
+      targetPort: 5500
+---

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: x-road-catalog-lister
+    labels:
+        app: x-road-catalog-lister
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: x-road-catalog-lister
+    template:
+        metadata:
+            labels:
+                app: x-road-catalog-lister
+        spec:
+            containers:
+                - name: x-road-catalog-lister
+                  image: x-road-catalog-lister:latest
+                  ports:
+                      - containerPort: 8080

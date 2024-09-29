@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xroad-messagelog-archiver-deployment
+  labels:
+    app: xroad-messagelog-archiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xroad-messagelog-archiver
+  template:
+    metadata:
+      labels:
+        app: xroad-messagelog-archiver
+    spec:
+      containers:
+        - name: xroad-messagelog-archiver
+          image: ghcr.io/digitaltelangana/pravahini:latest
+          command: ["/usr/share/xroad/bin/xroad-messagelog-archiver"]
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          securityContext:
+            runAsUser: 1100  
+            runAsGroup: 1100
+          volumeMounts:
+            - name: xroad-config-volume
+              mountPath: /etc/xroad.properties
+              subPath: xroad.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/db.properties
+              subPath: db.properties
+      volumes:
+        - name: xroad-config-volume
+          configMap:
+            name: xroad-config    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xroad-messagelog-archiver-service
+spec:
+  selector:
+    app: xroad-messagelog-archiver
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+---
