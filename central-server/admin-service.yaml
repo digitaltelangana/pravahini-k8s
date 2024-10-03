@@ -1,4 +1,49 @@
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-pkcs12-password-secret
+  namespace: default
+type: Opaque
+data:
+  password: Y2VudGVyLWFkbWluLXNlcnZpY2U= # center-admin-service
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: admin-xroad-ssl-cert
+  namespace: default
+spec:
+  secretName: admin-xroad-ssl-cert
+  commonName: pravahini.telangana.digital
+  subject:
+    organizations:
+    - Yuva Ganatantr Foundation
+    countries:
+    - IN
+  dnsNames:
+  - centralserver-admin.default.svc.cluster.local
+  - centralserver-registration.default.svc.cluster.local
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: password
+        name: admin-pkcs12-password-secret
+    pkcs12:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: password
+        name: admin-pkcs12-password-secret
+      profile: LegacyDES
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,17 +69,19 @@ spec:
               - name: XROAD_COMMON_GRPC_INTERNAL_KEYSTORE_PASSWORD
                 valueFrom:
                   secretKeyRef:
-                    name: pkcs12-password-secret
+                    name: admin-pkcs12-password-secret
                     key: password
               - name: XROAD_COMMON_GRPC_INTERNAL_TRUSTSTORE_PASSWORD
                 valueFrom:
                   secretKeyRef:
-                    name: pkcs12-password-secret
+                    name: admin-pkcs12-password-secret
                     key: password
+          ports:
+            - containerPort: 4000
           resources:
             limits:
-              cpu: "250m"
-              memory: "256Mi"
+              cpu: "500m"
+              memory: "512Mi"
           securityContext:
             runAsUser: 1100  
             runAsGroup: 1100
@@ -43,14 +90,21 @@ spec:
               mountPath: /etc/xroad.properties
               subPath: xroad.properties
             - name: xroad-config-volume
+              mountPath: /etc/xroad/services/local.properties
+              subPath: local.properties
+            - name: xroad-config-volume
               mountPath: /etc/xroad/db.properties
               subPath: db.properties
             - name: xroad-config-volume
               mountPath: /etc/xroad/ssl.properties
               subPath: ssl.properties
             - name: xroad-ssl-cert-volume
-              mountPath: /etc/xroad/ssl/center-admin-service.p12
-              subPath: keystore.p12
+              mountPath: /etc/xroad/ssl/center-admin-service.jks
+              subPath: keystore.jks
+              readOnly: true
+            - name: xroad-ssl-cert-volume
+              mountPath: /etc/xroad/ssl/truststore.jks
+              subPath: truststore.jks
               readOnly: true
       volumes:
         - name: xroad-config-volume
@@ -58,7 +112,7 @@ spec:
             name: xroad-config
         - name: xroad-ssl-cert-volume
           secret:
-            secretName: xroad-ssl-cert
+            secretName: admin-xroad-ssl-cert
 ---
 apiVersion: v1
 kind: Service

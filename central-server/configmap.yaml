@@ -10,7 +10,18 @@ data:
     ; Add all configuration options with sections from each configuration unit
   local.properties: |
     ; This file contains user overrides of properties
+    XROAD_PARAMS=-Dserver.ssl.enabled=false
+    XROAD_CS_REGISTRATION_SERVICE_PARAMS=-Dserver.ssl.enabled=false
+    XROAD_CS_ADMIN_SERVICE_PARAMS=-Dserver.ssl.enabled=false
+    XROAD_CS_MANAGEMENT_SERVICE_PARAMS=-Dserver.ssl.enabled=false
+    XROAD_PROXY_PARAMS=-Dserver.ssl.enabled=false
+    XROAD_PROXY_UI_PARAMS=-Dserver.ssl.enabled=false
   db.properties: |
+    spring.datasource.url=jdbc:postgresql://postgres.default.svc:5432/centerui
+    spring.datasource.username=root
+    spring.datasource.password=rootpassword
+    spring.datasource.hikari.data-source-properties.currentSchema=centerui
+    skip_migrations=false
     serverconf.hibernate.connection.url=jdbc:postgresql://postgres.default.svc:5432/serverconf
     serverconf.hibernate.connection.username=root
     serverconf.hibernate.connection.password=rootpassword
@@ -31,7 +42,16 @@ data:
     ; Creation Devices (SSCD).
   ssl.properties: |
     server.ssl.enabled=false
-    server.ssl.key-store-type=PKCS12
+    server.ssl.key-store-type=JKS
     server.ssl.key-store-password=password
-    server.ssl.key-alias=1
+    server.ssl.trust-store=/etc/xroad/ssl/truststore.jks
+    server.ssl.trust-store-password=password
+    ; server.ssl.key-alias=1
   configuration-anchor.xml: |
+    <configuration-anchor>
+      <instance-identifier>TG</instance-identifier>
+      <configuration-part>
+        <content-identifier>local</content-identifier>
+        <content-signature>local</content-signature>
+      </configuration-part>
+    </configuration-anchor>
