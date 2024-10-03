@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xroad-centralserver-admin-service-deployment
+  name: admin-service
   labels:
     app: xroad-centralserver-admin-service
 spec:
@@ -16,9 +16,21 @@ spec:
         app: xroad-centralserver-admin-service
     spec:
       containers:
-        - name: xroad-centralserver-admin-service
+        - name: admin-service
           image: ghcr.io/digitaltelangana/pravahini:latest
-          command: ["/usr/share/xroad/bin/xroad-centralserver-admin-service"]
+          command: 
+             - "/usr/share/xroad/bin/xroad-centralserver-admin-service"
+          env:
+              - name: XROAD_COMMON_GRPC_INTERNAL_KEYSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: pkcs12-password-secret
+                    key: password
+              - name: XROAD_COMMON_GRPC_INTERNAL_TRUSTSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: pkcs12-password-secret
+                    key: password
           resources:
             limits:
               cpu: "250m"
@@ -36,18 +48,22 @@ spec:
             - name: xroad-config-volume
               mountPath: /etc/xroad/ssl.properties
               subPath: ssl.properties
-            - name: xroad-config-volume
+            - name: xroad-ssl-cert-volume
               mountPath: /etc/xroad/ssl/center-admin-service.p12
-              subPath: center-admin-service.p12
+              subPath: keystore.p12
+              readOnly: true
       volumes:
         - name: xroad-config-volume
           configMap:
-            name: xroad-config    
+            name: xroad-config
+        - name: xroad-ssl-cert-volume
+          secret:
+            secretName: xroad-ssl-cert
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: xroad-centralserver-admin-service
+  name: centralserver-admin
 spec:
   selector:
     app: xroad-centralserver-admin-service

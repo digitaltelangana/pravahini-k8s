@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xroad-proxy-deployment
+  name: proxy
   labels:
     app: xroad-proxy
 spec:
@@ -40,9 +40,9 @@ spec:
             runAsUser: 1100  
             runAsGroup: 1100
           volumeMounts:
-            - name: grpc-keystore
+            - name: xroad-ssl-cert-volume
               mountPath: /var/run/xroad/xroad-grpc-internal-keystore.p12
-              subPath: xroad-grpc-internal-keystore.p12
+              subPath: keystore.p12
             - name: xroad-config-volume
               mountPath: /etc/xroad.properties
               subPath: xroad.properties
@@ -52,21 +52,21 @@ spec:
             - name: xroad-config-volume
               mountPath: /etc/xroad/conf.d/local.ini
               subPath: local.ini
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/globalconf/instance-identifier
+              subPath: instance-identifier
       volumes:
         - name: xroad-config-volume
           configMap:
             name: xroad-config  
-        - name: grpc-keystore
+        - name: xroad-ssl-cert-volume
           secret:
-            secretName: xroad-common-grpc-passwords
-            items:
-              - key: xroad-grpc-internal-keystore_p12
-                path: xroad-grpc-internal-keystore.p12  
+            secretName: xroad-ssl-cert    
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: xroad-proxy-service
+  name: proxy
 spec:
   selector:
     app: xroad-proxy

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xroad-confclient-deployment
+  name: confclient
   labels:
     app: xroad-confclient
 spec:
@@ -32,6 +32,9 @@ spec:
             - name: xroad-config-volume
               mountPath: /etc/xroad/db.properties
               subPath: db.properties
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/configuration-anchor.xml
+              subPath: configuration-anchor.xml
       volumes:
         - name: xroad-config-volume
           configMap:
@@ -40,7 +43,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: xroad-confclient-service
+  name: confclient
 spec:
   selector:
     app: xroad-confclient

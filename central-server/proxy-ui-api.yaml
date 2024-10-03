@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xroad-proxy-ui-api-deployment
+  name: proxy-ui-api
   labels:
     app: xroad-proxy-ui-api
 spec:
@@ -40,16 +40,22 @@ spec:
               subPath: ssl.properties
             - name: xroad-config-volume
               mountPath: /etc/xroad/ssl/proxy-ui-api.p12
-              subPath: proxy-ui-api.p12
+              subPath: keystore.p12
+            - name: xroad-config-volume
+              mountPath: /etc/xroad/globalconf/instance-identifier
+              subPath: instance-identifier
       volumes:
         - name: xroad-config-volume
           configMap:
-            name: xroad-config    
+            name: xroad-config
+        - name: xroad-ssl-cert-volume
+          secret:
+            secretName: xroad-ssl-cert        
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: xroad-proxy-ui-api-service
+  name: proxy-ui-api
 spec:
   selector:
     app: xroad-proxy-ui-api

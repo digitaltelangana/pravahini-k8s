@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xroad-messagelog-archiver-deployment
+  name: messagelog-archiver
   labels:
     app: xroad-messagelog-archiver
 spec:
@@ -41,7 +41,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: xroad-messagelog-archiver-service
+  name: messagelog-archiver
 spec:
   selector:
     app: xroad-messagelog-archiver

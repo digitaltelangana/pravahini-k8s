@@ -15,7 +15,7 @@ RUN groupadd -r -g 1100 xroad && useradd -rM -g xroad -u 1100 xroad
 USER xroad:xroad
 COPY --from=builder /usr/share/xroad /usr/share/xroad
 COPY --from=builder /usr/share/doc/ /usr/share/doc/
-COPY --from=builder /etc/xroad/ /etc/xroad/
+COPY --from=builder --chown=xroad:xroad /etc/xroad/ /etc/xroad/
 COPY --from=builder /var/lib/xroad/ /var/lib/xroad/
 COPY --from=builder /etc/rsyslog.d/ /etc/rsyslog.d/
 

@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkcs12-password-secret
+  namespace: default
+type: Opaque
+data:
+  password: cGFzc3dvcmQ= # password
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: selfsigned-ca
+spec:
+  isCA: true
+  commonName: selfsigned-ca
+  secretName: root-secret
+  privateKey:
+    rotationPolicy: Always
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: ca-issuer
+# spec:
+#   ca:
+#     secretName: root-secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: xroad-ssl-cert
+  namespace: default
+spec:
+  secretName: xroad-ssl-cert
+  commonName: pravahini.telangana.digital
+  subject:
+    organizations:
+    - Yuva Ganatantr Foundation
+    countries:
+    - IN
+  dnsNames:
+  - signer.default.svc.cluster.local
+  - proxy.default.svc.cluster.local
+  - proxy-ui-api.default.svc.cluster.local
+  - centralserver-admin.default.svc.cluster.local
+  - centralserver-registration.default.svc.cluster.local
+  - pravahini.telangana.digital
+  - cs.pravahini.telangana.digital
+  - ss.pravahini.telangana.digital
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: password
+        name: pkcs12-password-secret
+    pkcs12:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: password
+        name: pkcs12-password-secret
+      profile: LegacyDES

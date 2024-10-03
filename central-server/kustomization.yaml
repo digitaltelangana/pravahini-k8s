@@ -1,15 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - cert-manager.yaml
+  - sslcert.yaml
   - cache-pvc.yaml
   - postgres.yaml
   - configmap.yaml
-  - base.yaml
-  - cs-admin-service.yaml
+  - secrets.yaml
+  - admin-service.yaml
   - confclient.yaml
   - proxy.yaml
-  - cs-management-service.yaml
-  - cs-registration-service.yaml
+  - management-service.yaml
+  - registration-service.yaml
   - messagelog-archiver.yaml
   - proxy-ui-api.yaml
   - signer.yaml

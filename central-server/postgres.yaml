@@ -1,62 +1,97 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  hostPath:
+    path: /data/postgres
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeName: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+type: Opaque
+data:
+  POSTGRES_USER: cm9vdA==     # printf root | base64
+  POSTGRES_PASSWORD: cm9vdHBhc3N3b3Jk # printf rootpassword | base64
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  labels:
+    app: postgres
+    role: service
 spec:
-  serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
       app: postgres
+      role: service
+  serviceName: postgres
   template:
     metadata:
       labels:
         app: postgres
+        role: service
     spec:
       containers:
-      - name: postgres
-        image: postgres:16
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_USER
-          value: root
-        - name: POSTGRES_PASSWORD
-          value: rootpassword
-        securityContext:
-            runAsUser: 1100  
-            runAsGroup: 1100
-        volumeMounts:
-            - name: postgres-data
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_USER
+                  name: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_PASSWORD
+                  name: postgres
+          ports:
+            - containerPort: 5432
+              name: postgres
+              protocol: TCP
+          volumeMounts:
+            - name: postgres
               mountPath: /var/lib/postgresql/data
-            - name: xroad-config-volume
-              mountPath: /etc/xroad.properties
-              subPath: xroad.properties
-            - name: xroad-config-volume
-              mountPath: /etc/xroad/db.properties
-              subPath: db.properties
       volumes:
-        - name: xroad-config-volume
-          configMap:
-            name: xroad-config    
-        
-  volumeClaimTemplates:
-  - metadata:
-      name: postgres-data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 1Gi
+        - name: postgres
+          persistentVolumeClaim:
+            claimName: postgres
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels:
+    app: postgres
+    role: service
 spec:
   selector:
     app: postgres
+    role: service
+  type: NodePort
   ports:
-  - protocol: TCP
-    port: 5432
-    targetPort: 5432
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
